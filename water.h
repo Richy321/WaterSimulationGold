@@ -92,9 +92,9 @@ namespace octet
 				app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, 2.5);
 			}
 
-			if (is_key_going_down('R'))
+			if (is_key_going_down('1'))
 			{
-				//terrain->usePerlinRandom = !terrain->usePerlinRandom;
+				waterPlane->toggleWireframe();
 			}
 
 			if (is_key_going_down('C'))

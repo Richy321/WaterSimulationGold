@@ -11,6 +11,7 @@ private:
 
 	octet::ivec3 dimensions;
 	octet::vec3 size;
+	bool renderWireframe = false;
 
 public:
 
@@ -23,6 +24,8 @@ public:
 		set_aabb(octet::aabb(octet::vec3(0, 0, 0), size));
 
 		buildPlane();
+
+		this->set_mode(GL_TRIANGLES);
 	}
 
 	virtual ~Plane()
@@ -82,6 +85,17 @@ public:
 	{
 		set_vertices(vertices);
 		set_indices(indices);
+	}
+
+	void toggleWireframe()
+	{
+		renderWireframe = !renderWireframe;
+
+		if (renderWireframe)
+			this->set_mode(GL_LINES);
+		else
+			this->set_mode(GL_TRIANGLES);
+
 	}
 
 
