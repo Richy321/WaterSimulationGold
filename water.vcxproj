@@ -217,10 +217,14 @@
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="water.h" />
+    <ClInclude Include="wave.h" />
+    <ClInclude Include="WaterPlane.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl" />
     <None Include="..\..\resources\resources.inl" />
+    <None Include="waves.fs" />
+    <None Include="waves.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

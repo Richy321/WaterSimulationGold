@@ -4,14 +4,13 @@
 class Plane : public octet::mesh
 {
 
-private:
+protected:
 	octet::dynarray<vertex> vertices;
 	octet::dynarray<uint32_t> indices;
-	octet::material *customMaterial;
-
 	octet::ivec3 dimensions;
 	octet::vec3 size;
 	bool renderWireframe = false;
+	octet::material *material = nullptr;
 
 public:
 
@@ -98,6 +97,7 @@ public:
 
 	}
 
-
+	octet::material* getMaterial() { return material; }
+	void setMaterial(octet::material* mat) { material = mat; }
 };
 

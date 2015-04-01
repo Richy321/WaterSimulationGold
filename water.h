@@ -1,4 +1,5 @@
 #include "Plane.h"
+#include "WaterPlane.h"
 
 namespace octet 
 {
@@ -7,7 +8,7 @@ namespace octet
 	{
 		// scene for drawing box
 		ref<visual_scene> app_scene;
-		ref<Plane> waterPlane;
+		ref<WaterPlane> waterPlane;
 		octet::camera_instance *camera; /// main camera instance 
 		octet::mouse_look mouseLookHelper;
 
@@ -25,18 +26,15 @@ namespace octet
 
 			mouseLookHelper.init(this, 90.0f / 360.0f, false);
 
-			//intiialise plane
-			material *blue = new material(vec4(0, 0, 1, 1));
+			//initialise wavePlane
 			const octet::vec3 size(100.0f, 0.0f, 100.0f);
-			const octet::ivec3 dimensions(128, 0, 128);
-			waterPlane = new Plane(dimensions, size);
-			waterPlane->setArrays();
+			const octet::ivec3 dimensions(64, 0, 64);
+			waterPlane = new WaterPlane(dimensions, size);
 
 			scene_node *node = new scene_node();
 			app_scene->add_child(node);
-			app_scene->add_mesh_instance(new mesh_instance(node, waterPlane, blue));
+			app_scene->add_mesh_instance(new mesh_instance(node, waterPlane, waterPlane->getMaterial()));
 			
-
 			//change camera pos
 			camera = app_scene->get_camera_instance(0);
 			camera->set_far_plane(1000.0f);
@@ -69,6 +67,8 @@ namespace octet
 			octet::mat4t &camera_to_world = camera_node->access_nodeToParent();
 			mouseLookHelper.update(camera_to_world);
 			handleKeyboardControl();
+
+			waterPlane->Update(0.0f);
 		}
 
 		void handleKeyboardControl()
