@@ -223,8 +223,8 @@
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl" />
     <None Include="..\..\resources\resources.inl" />
-    <None Include="waves.fs" />
-    <None Include="waves.vs" />
+    <None Include="waves.fp" />
+    <None Include="waves.vp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

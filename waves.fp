@@ -5,6 +5,7 @@
 
 // inputs
 uniform vec4 colour;
+varying in vec4 color_;
 
 void main() 
 {

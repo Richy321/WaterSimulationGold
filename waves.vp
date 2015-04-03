@@ -1,0 +1,91 @@
+//////////////////////////////////////////////////////////////////////////////////////////
+//
+// Default vertex shader for materials. Extend this to deal with bump mapping, defered rendering, shadows etc.
+//
+
+//uniforms
+//uniform float waves[100]; // 6 floats, waveLength, amplitude, speed, steepness, directionX, directionY
+uniform int waveCount;
+uniform float time;
+
+uniform float amplitude[8];
+uniform float wavelength[8];
+uniform float speed[8];
+uniform float steepness[8];
+uniform float directionX[8];
+uniform float directionY[8];
+
+const float PI = 3.14159;
+//const int waveDataSize = 6;
+const float waterHeight = 0.0;
+
+
+// matrices
+uniform mat4 modelToProjection;
+uniform mat4 modelToCamera;
+
+// attributes from vertex buffer
+attribute vec4 pos;
+attribute vec2 uv;
+attribute vec3 normal;
+attribute vec4 color;
+
+// outputs
+varying out vec3 normal_;
+varying out vec2 uv_;
+varying out vec4 color_;
+varying out vec3 model_pos_;
+varying out vec3 camera_pos_;
+
+float SineWave(int waveNumber, float x, float y)
+{
+	//int waveIndex = waveDataSize * waveNumber;
+
+	/*float waveLength = waves[waveIndex];
+	float amplitude = waves[waveIndex+1];
+	float speed = waves[waveIndex+2];
+	float steepness = waves[waveIndex+3];
+	vec2 direction = vec2(waves[waveIndex+4], waves[waveIndex+5]);
+	
+	float frequency = 2.0 * PI / waveLength; 
+	float phase = speed * frequency; 
+	float theta = dot(direction, vec2(x,y));
+
+	return amplitude * sin(theta * frequency + time * phase);
+	*/
+	float frequency = 2.0 * PI / wavelength[waveNumber]; 
+	float phase = speed[waveNumber] * frequency; 
+	float theta = dot(vec2(directionX[waveNumber], directionY[waveNumber]), vec2(x,y));
+
+	return amplitude[waveNumber] * sin(theta * frequency + time * phase);
+}
+
+float SineWaveSummation(float x, float y)
+{
+	float height = 0.0;
+	for(int i =0; i < waveCount; i++)
+	{
+		height += SineWave(i, x, y);
+	}
+	return height;
+}
+
+vec3 GerstnerWaveFunction(vec3 pos)
+{
+	return vec3(0,0,0);
+}
+
+void main() 
+{
+	vec4 newPos = pos;
+	newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
+	
+	gl_Position = modelToProjection * newPos;
+	vec3 tnormal = (modelToCamera * vec4(normal, 0.0)).xyz;
+	vec3 tpos = (modelToCamera * newPos).xyz;
+	normal_ = tnormal;
+	uv_ = uv;
+	color_ = color;
+	camera_pos_ = tpos;
+	model_pos_ = newPos.xyz;//pos.xyz / pos.w;
+}

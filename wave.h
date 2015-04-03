@@ -1,8 +1,6 @@
 #pragma once
 #include "../../octet.h"
 
-#define PI 3.14159
-
 class wave
 {
 public:
@@ -12,13 +10,13 @@ public:
 	float steepness; // K - steepness value for 
 	octet::vec2 direction; //D - horizontal vector perpendicular to the wave front along which the crest travels
 
-	wave(float wavelength, float amplitude, float frequency, octet::vec2 direction, const int waveCount)
+	wave(float wavelength, float amplitude, float speed, float steepness, octet::vec2 direction, const int waveCount)
 	{
 		this->wavelength = wavelength;
 		this->amplitude = amplitude;
-		this->speed = CalculateSpeed(frequency);
+		this->speed = speed;
+		this->steepness = steepness; //CalculateSteepness(Q ? ? , waveCount);
 		this->direction = direction;
-		//this->steepness = CalculateSteepness(Q ? ? , waveCount);
 	}
 
 	~wave()
@@ -31,10 +29,10 @@ public:
 		return 0.0f;
 	}
 
-	float CalculateSpeed(float s)
+	/*float CalculateSpeed(float s)
 	{
 		//Phase-constant S x 2pi/L
 		return s * ((2 * PI) / wavelength);
-	}
+	}*/
 };
 

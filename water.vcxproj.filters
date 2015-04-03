@@ -432,8 +432,8 @@
     </ClInclude>
     <ClInclude Include="Plane.h" />
     <ClInclude Include="water.h" />
-    <ClInclude Include="wave.h" />
     <ClInclude Include="WaterPlane.h" />
+    <ClInclude Include="wave.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">
@@ -442,7 +442,7 @@
     <None Include="..\..\resources\resources.inl">
       <Filter>octet\resources</Filter>
     </None>
-    <None Include="waves.fs" />
-    <None Include="waves.vs" />
+    <None Include="waves.vp" />
+    <None Include="waves.fp" />
   </ItemGroup>
 </Project>

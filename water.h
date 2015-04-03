@@ -68,7 +68,7 @@ namespace octet
 			mouseLookHelper.update(camera_to_world);
 			handleKeyboardControl();
 
-			waterPlane->Update(0.0f);
+			waterPlane->Update();
 		}
 
 		void handleKeyboardControl()
