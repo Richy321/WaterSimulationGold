@@ -4,7 +4,7 @@
 //
 
 //uniforms
-//uniform float waves[100]; // 6 floats, waveLength, amplitude, speed, steepness, directionX, directionY
+uniform float waves[8*6]; // 6 floats, waveLength, amplitude, speed, steepness, directionX, directionY
 uniform int waveCount;
 uniform float time;
 
@@ -16,7 +16,7 @@ uniform float directionX[8];
 uniform float directionY[8];
 
 const float PI = 3.14159;
-//const int waveDataSize = 6;
+const int waveDataSize = 6; //6 floats plus 8 bytes(2 more floats) due to 16 byte memory alignment
 const float waterHeight = 0.0;
 
 
@@ -37,22 +37,25 @@ varying out vec4 color_;
 varying out vec3 model_pos_;
 varying out vec3 camera_pos_;
 
+float SineWavePacked(int waveNumber, float x, float y)
+{
+	int waveIndex = waveDataSize * waveNumber;
+
+	float waveLength_ = waves[waveIndex];
+	float amplitude_ = waves[waveIndex+1];
+	float speed_ = waves[waveIndex+2];
+	float steepness_ = waves[waveIndex+3];
+	vec2 direction_ = vec2(waves[waveIndex+4], waves[waveIndex+5]);
+	
+	float frequency = 2.0 * PI / waveLength_; 
+	float phase = speed_ * frequency; 
+	float theta = dot(direction_, vec2(x,y));
+
+	return amplitude_ * sin(theta * frequency + time * phase);
+}
+
 float SineWave(int waveNumber, float x, float y)
 {
-	//int waveIndex = waveDataSize * waveNumber;
-
-	/*float waveLength = waves[waveIndex];
-	float amplitude = waves[waveIndex+1];
-	float speed = waves[waveIndex+2];
-	float steepness = waves[waveIndex+3];
-	vec2 direction = vec2(waves[waveIndex+4], waves[waveIndex+5]);
-	
-	float frequency = 2.0 * PI / waveLength; 
-	float phase = speed * frequency; 
-	float theta = dot(direction, vec2(x,y));
-
-	return amplitude * sin(theta * frequency + time * phase);
-	*/
 	float frequency = 2.0 * PI / wavelength[waveNumber]; 
 	float phase = speed[waveNumber] * frequency; 
 	float theta = dot(vec2(directionX[waveNumber], directionY[waveNumber]), vec2(x,y));
@@ -70,6 +73,32 @@ float SineWaveSummation(float x, float y)
 	return height;
 }
 
+float SineNormalPartial(int waveNumber, float x, float y, bool isDirectionX)
+{
+	float frequency = 2.0 * PI / wavelength[waveNumber];
+	float phase = speed[waveNumber] * frequency; 
+	float theta = dot(vec2(directionX[waveNumber], directionY[waveNumber]), vec2(x,y));
+	float A = amplitude[waveNumber] *  (isDirectionX ? directionX[waveNumber] : directionY[waveNumber]) * frequency;
+	
+	return A * cos(theta * frequency + time * phase);
+}
+
+vec3 SineNormal(float x, float y)
+{
+	float dx = 0.0;
+	float dy = 0.0;
+
+	for(int i = 0; i < waveCount; i++)
+	{
+		dx += SineNormalPartial(i, x, y, true);
+		dy += SineNormalPartial(i, x, y, false);
+	}
+
+	vec3 norm = vec3(-dx, -dy, 1.0);
+	return normalize(norm);
+}
+
+
 vec3 GerstnerWaveFunction(vec3 pos)
 {
 	return vec3(0,0,0);
@@ -81,11 +110,11 @@ void main()
 	newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
 	
 	gl_Position = modelToProjection * newPos;
-	vec3 tnormal = (modelToCamera * vec4(normal, 0.0)).xyz;
+	vec3 tnormal = (modelToCamera * vec4(SineNormal(pos.x, pos.z), 0.0)).xyz;
 	vec3 tpos = (modelToCamera * newPos).xyz;
 	normal_ = tnormal;
 	uv_ = uv;
 	color_ = color;
 	camera_pos_ = tpos;
-	model_pos_ = newPos.xyz;//pos.xyz / pos.w;
+	model_pos_ = newPos.xyz;
 }

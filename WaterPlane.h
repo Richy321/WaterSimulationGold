@@ -16,7 +16,7 @@ private:
 	octet::ref<octet::param_uniform> colourUniform;
 	octet::ref<octet::param_uniform> timeUniform;
 	octet::ref<octet::param_uniform> waveCountUniform;
-	//octet::ref<octet::param_uniform> wavesUniform;
+	octet::ref<octet::param_uniform> wavesUniform;
 	
 	octet::ref<octet::param_uniform> amplitudeUniform;
 	octet::ref<octet::param_uniform> wavelengthUniform;
@@ -101,12 +101,15 @@ public:
 		octet::atom_t atom_directionY = octet::app_utils::get_atom("directionY");
 		directionYUniform = material->add_uniform(nullptr, atom_directionY, GL_FLOAT, 8, octet::param::stage_vertex);
 
-		//material->set_uniform(amplitudeUniform, &waveCount, sizeof(waveCount));
 		Update();
 
-		//octet::atom_t atom_waves = octet::app_utils::get_atom("waves");
-		//wavesUniform = material->add_uniform(nullptr, atom_waves, GL_FLOAT, waveCount * (sizeof(wave) / sizeof(float)), octet::param::stage_vertex); //current 6 floats per wave
-		//material->set_uniform(wavesUniform, waves.data(), waves.size()*sizeof(waves[0]));
+		octet::atom_t atom_waves = octet::app_utils::get_atom("waves");
+		wavesUniform = material->add_uniform(nullptr, atom_waves, GL_FLOAT, waveCount * (sizeof(wave) / sizeof(float)), octet::param::stage_vertex); //current 6 floats per wave
+		
+		size_t waveSize = sizeof(waves[0]);
+		__unaligned wave** waveData = waves.data();
+		size_t wavesSize = sizeof(waveData);
+		material->set_uniform(wavesUniform, waveData, waves.size()*sizeof(wave));
 	}
 
 	void Update()
@@ -131,8 +134,8 @@ public:
 			wavelength[i] = waves[i]->wavelength;
 			speed[i] = waves[i]->speed;
 			steepness[i] = waves[i]->steepness;
-			directionX[i] = waves[i]->direction.x();
-			directionY[i] = waves[i]->direction.y();
+			directionX[i] = waves[i]->directionX;// .x();
+			directionY[i] = waves[i]->directionY;//.y();
 		}
 
 		material->set_uniform(amplitudeUniform, &amplitude, waveCount * sizeof(float));
