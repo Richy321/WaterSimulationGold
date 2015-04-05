@@ -9,6 +9,7 @@ class WaterPlane : public Plane
 {
 private:
 	octet::ref<octet::param_uniform> colourUniform;
+	octet::ref<octet::param_uniform> alphaUniform;
 	octet::ref<octet::param_uniform> timeUniform;
 	octet::ref<octet::param_uniform> waveCountUniform;
 	octet::ref<octet::param_uniform> wavesUniform;
@@ -19,6 +20,8 @@ private:
 	octet::ref<octet::param_uniform> steepnessUniform;
 	octet::ref<octet::param_uniform> directionXUniform;
 	octet::ref<octet::param_uniform> directionYUniform;
+
+	octet::ref<octet::param_uniform> waveTypeUniform;
 	
 	const float PI = 3.14159f;
 	octet::random rand;
@@ -26,18 +29,27 @@ private:
 	time_point<high_resolution_clock> startTime;
 	float secondsSinceStart = 0.0f;
 public:
+	enum WavesType
+	{
+		Sine = 0,
+		Gerstner = 1,
+		Radial = 2,
+	} waveType = Gerstner;
+
 	octet::dynarray<wave*> waves;
 	static const int waveCount = 8;
-	octet::vec4 colour;
+	octet::vec3 colour;
+	float alpha = 0.6f;
+
 public:
 	WaterPlane(const octet::ivec3 dimensions, const octet::vec3 size) : Plane(dimensions, size)
 	{
-		colour = octet::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		colour = octet::vec3(0.0f, 0.0f, 1.0f);
 
 		rand = octet::random((unsigned int)time(NULL));
 
 		octet::param_shader* shader = new octet::param_shader("src/examples/water/waves.vp", "src/examples/water/waves.fp");
-		material = new octet::material(colour, shader);
+		material = new octet::material(octet::vec4(colour, alpha) , shader);
 		setArrays();
 
 		InitialiseWaves(waveCount);
@@ -52,6 +64,7 @@ public:
 
 	void InitialiseWaves(const int count)
 	{
+		waves.reset();
 		for (int i = 0; i < count; i++)
 		{
 			float angle = rand.get(-PI / 3, PI / 3);
@@ -70,11 +83,16 @@ public:
 	void InitialiseUniforms()
 	{
 		octet::atom_t atom_colour = octet::app_utils::get_atom("colour");
-		colourUniform = material->add_uniform(nullptr, atom_colour, GL_FLOAT_VEC4, 1, octet::param::stage_fragment);
-		material->set_uniform(colourUniform, &colour, sizeof(colour));
+		colourUniform = material->add_uniform(nullptr, atom_colour, GL_FLOAT_VEC3, 1, octet::param::stage_fragment);
+
+		octet::atom_t atom_alpha = octet::app_utils::get_atom("alpha");
+		alphaUniform = material->add_uniform(nullptr, atom_alpha, GL_FLOAT, 1, octet::param::stage_fragment);
 
 		octet::atom_t atom_time = octet::app_utils::get_atom("time");
 		timeUniform = material->add_uniform(nullptr, atom_time, GL_FLOAT, 1, octet::param::stage_vertex);
+
+		octet::atom_t atom_waveType = octet::app_utils::get_atom("waveType");
+		waveTypeUniform = material->add_uniform(nullptr, atom_waveType, GL_INT, 1, octet::param::stage_vertex);
 
 		octet::atom_t atom_waveCount = octet::app_utils::get_atom("waveCount");
 		waveCountUniform = material->add_uniform(nullptr, atom_waveCount, GL_INT, 1, octet::param::stage_vertex);
@@ -116,7 +134,15 @@ public:
 		duration<float> durationSinceStart = duration_cast<duration<float>>(nowTime - startTime);
 		secondsSinceStart = durationSinceStart.count();
 
+		//update time
 		material->set_uniform(timeUniform, &secondsSinceStart, sizeof(secondsSinceStart));
+
+		//update wave type
+		material->set_uniform(waveTypeUniform, &waveType, sizeof(int));
+
+		//update colour & alpha
+		material->set_uniform(colourUniform, &colour, sizeof(colour));
+		material->set_uniform(alphaUniform, &alpha, sizeof(alpha));
 
 		float amplitude[waveCount];
 		float wavelength[waveCount];
@@ -131,10 +157,11 @@ public:
 			wavelength[i] = waves[i]->wavelength;
 			speed[i] = waves[i]->speed;
 			steepness[i] = waves[i]->steepness;
-			directionX[i] = waves[i]->directionX;// .x();
-			directionY[i] = waves[i]->directionY;//.y();
+			directionX[i] = waves[i]->directionX;
+			directionY[i] = waves[i]->directionY;
 		}
 
+		//update all wave parameters
 		material->set_uniform(amplitudeUniform, &amplitude, waveCount * sizeof(float));
 		material->set_uniform(wavelengthUniform, &wavelength, waveCount * sizeof(float));
 		material->set_uniform(speedUniform, &speed, waveCount * sizeof(float));

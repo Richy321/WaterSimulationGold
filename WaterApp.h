@@ -1,6 +1,10 @@
 #include "Plane.h"
 #include "WaterPlane.h"
 
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
 namespace octet 
 {
 	/// Scene containing a box with octet.
@@ -17,6 +21,8 @@ namespace octet
 		int waveCount;
 		char buff[1];
 		
+		string configurationPath = "config.cfg";
+		string getUrlPath = "src/examples/water/";
 
 	public:
 		/// this is called when we construct the class before everything is initialised.
@@ -113,7 +119,7 @@ namespace octet
 			else if (is_key_down('W')){
 				app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, -2.5);
 			}
-			else if (is_key_down('S')){
+			else if (!is_key_down(octet::key_ctrl) && is_key_down('S')){
 				app_scene->get_camera_instance(0)->get_node()->access_nodeToParent().translate(0, 0, 2.5);
 			}
 
@@ -153,6 +159,18 @@ namespace octet
 			}
 			else if (is_key_down('K')){
 				app_scene->get_light_instance(0)->get_node()->access_nodeToParent().rotateX(-1);
+			}
+
+			if (is_key_down(octet::key_ctrl) && is_key_going_down('S'))
+			{
+				SaveConfiguration(configurationPath.c_str(), &waterPlane->waves);
+			}
+
+			if (is_key_down(octet::key_ctrl) && is_key_going_down('L'))
+			{
+				string path(getUrlPath);
+				path += configurationPath;
+				LoadConfigurationFile(path.c_str(), &waterPlane->waves);
 			}
 
 			if (is_key_down(octet::key_esc))
@@ -214,6 +232,9 @@ namespace octet
 			toolbar = TwNewBar("WaveParameters");
 			TwDefine(" WaveParameters label='Configuration' ");
 			TwAddVarRW(toolbar, "Water Colour", TW_TYPE_COLOR3F, &waterPlane->colour, " label='Water Colour' ");
+			TwAddVarRW(toolbar, "Water Alpha", TW_TYPE_FLOAT, &waterPlane->alpha, " label='Water Alpha' step=0.01 min=0.0 max=1.0");
+			//TwAddVarRW(toolbar, "Wave Count", TW_TYPE_COLOR3F, &waterPlane->waveCount, " label='Wave Count' ");
+			TwAddVarRW(toolbar, "Wave Type", TW_TYPE_INT32, &waterPlane->waveType, " label='Wave Type' min=0 max=2");
 
 			string stringQuote = "'";
 			string stepText = " step=0.01 ";
@@ -238,6 +259,54 @@ namespace octet
 		void ToggleToolbar(bool isShow)
 		{
 			isShowToolbar = isShow;
+		}
+
+		void LoadConfigurationFile(const char *path, octet::dynarray<wave*>* waves)
+		{
+			//read while file into memory (quicker than line by line)
+			dynarray<uint8_t> fileContents;
+			app_utils::get_url(fileContents, path);
+
+			char* curPos = (char*)fileContents.data();
+			waterPlane->waveType = (WaterPlane::WavesType)(int)atoi(curPos);
+			curPos += 3;
+			//waterPlane->waveCount = (int)curPos;
+			curPos += 3;
+
+			char* tokens = strtok(curPos, " ");
+			for (unsigned int i = 0; i < waveCount; i++)
+			{
+				(*waves)[i]->amplitude = atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->wavelength = atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->speed = atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->steepness = atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->directionX = atof(tokens); tokens = strtok(NULL, " \r\n");
+				(*waves)[i]->directionY = atof(tokens); tokens = strtok(NULL, " \r\n");
+			}
+		}
+
+		void SaveConfiguration(const char *path, octet::dynarray<wave*>* waves)
+		{
+			std::ofstream configFile;
+			
+			int precision = 5;
+			configFile.open(path);
+			if (configFile.good())
+			{
+				configFile << waterPlane->waveType << "\n";
+				configFile << waterPlane->waveCount << "\n";
+
+				for (unsigned int i = 0; i < waveCount; i++)
+				{
+					configFile << std::setprecision(precision) << (*waves)[i]->amplitude << " ";
+					configFile << std::setprecision(precision) << (*waves)[i]->wavelength << " ";
+					configFile << std::setprecision(precision) << (*waves)[i]->speed << " ";
+					configFile << std::setprecision(precision) << (*waves)[i]->steepness << " ";
+					configFile << std::setprecision(precision) << (*waves)[i]->directionX << " ";
+					configFile << std::setprecision(precision) << (*waves)[i]->directionY << "\n";
+				}
+			}
+			configFile.close();
 		}
 	};
 }

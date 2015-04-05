@@ -2,6 +2,9 @@
 uniform float waves[8*6]; // 6 floats, waveLength, amplitude, speed, steepness, directionX, directionY
 uniform int waveCount;
 uniform float time;
+uniform int waveType;
+uniform vec3 colour;
+uniform float alpha;
 
 uniform float amplitude[8];
 uniform float wavelength[8];
@@ -13,7 +16,6 @@ uniform float directionY[8];
 const float PI = 3.14159;
 const int waveDataSize = 6; //6 floats plus 8 bytes(2 more floats) due to 16 byte memory alignment
 const float waterHeight = 0.0;
-
 
 // matrices
 uniform mat4 modelToProjection;
@@ -93,23 +95,94 @@ vec3 SineNormal(float x, float y)
 	return normalize(norm);
 }
 
+vec3 GerstnerWavePartial(int waveNumber, vec3 pos)
+{
+	float frequency = 2.0 * PI / wavelength[waveNumber]; 
+	float phase = speed[waveNumber] * frequency; 
+	vec2 dir = vec2(directionX[waveNumber],directionY[waveNumber]);
+	float theta = dot(dir, vec2(pos.x, pos.z));
+
+	//s() = sin(w * D dot P + phase * time
+	//c() = sin(w * D dot P + phase * time
+	float s = sin(theta * frequency + time * phase);
+	float c = cos(theta * frequency + time * phase);
+
+	vec3 newPos = vec3(dir.x * steepness[waveNumber] * amplitude[waveNumber] * c,
+			amplitude[waveNumber] * s,
+			dir.y * steepness[waveNumber] * amplitude[waveNumber] * c);
+
+	return newPos;
+}
 
 vec3 GerstnerWaveFunction(vec3 pos)
 {
-	return vec3(0,0,0);
+	vec3 newPos = vec3(0,0,0); 
+	for(int i = 0; i < waveCount; i++)
+	{
+		newPos += GerstnerWavePartial(i, pos);
+	}
+	return newPos;
+}
+
+vec3 GerstnerWaveNormalPartial(int waveNumber, vec3 pos)
+{
+	float frequency = 2.0 * PI / wavelength[waveNumber]; 
+	float phase = speed[waveNumber] * frequency; 
+	vec2 dir = normalize(vec2(directionX[waveNumber],directionY[waveNumber]));
+	float theta = dot(dir, vec2(pos.x, pos.z));
+
+	float s = sin(theta * frequency + time * phase);
+	float c = cos(theta * frequency + time * phase);
+
+	float x = 2.0 * amplitude[waveNumber] * dir.x * frequency * c;
+	float y = steepness[waveNumber] * amplitude[waveNumber] * frequency * s;
+	float z = 2.0 * amplitude[waveNumber] * dir.x * frequency * c;
+	
+	return vec3(x,y,z);
+}
+
+vec3 GerstnerWaveNormal(vec3 pos)
+{
+	vec3 tempNorm = vec3(0,0,0); 
+	for(int i = 0; i < waveCount; i++)
+	{
+		tempNorm -= GerstnerWaveNormalPartial(i, pos);
+	}
+	vec3 norm = vec3(tempNorm.x, 1.0+tempNorm.y, tempNorm.z);
+	return normalize(norm);
 }
 
 void main() 
 {
 	vec4 newPos = pos;
-	newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
-	
-	gl_Position = modelToProjection * newPos;
-	vec3 tnormal = (modelToCamera * vec4(SineNormal(pos.x, pos.z), 0.0)).xyz;
-	vec3 tpos = (modelToCamera * newPos).xyz;
+	vec3 tnormal = vec3(0,1,0);
+	vec3 tpos = pos.xyz;
+	switch(waveType)
+	{
+		case 0: //Sine
+			newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
+			gl_Position = modelToProjection * newPos;
+			tnormal = (modelToCamera * vec4(SineNormal(pos.x, pos.z), 0.0)).xyz;
+			tpos = (modelToCamera * newPos).xyz;
+		break;
+
+		case 1: //Gertsner
+			vec3 tempPos = GerstnerWaveFunction(pos.xyz);
+			newPos = vec4(pos.x + tempPos.x, tempPos.y, pos.z + tempPos.z, pos.w);
+			gl_Position = modelToProjection * newPos;
+			tnormal = (modelToCamera * vec4(GerstnerWaveNormal(pos.xyz), 0.0)).xyz;
+			tpos = (modelToCamera * newPos).xyz;
+			break;
+		case 2: //Radial
+					newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
+			gl_Position = modelToProjection * newPos;
+			tnormal = (modelToCamera * vec4(SineNormal(pos.x, pos.y), 0.0)).xyz;
+			tpos = (modelToCamera * newPos).xyz;
+			break;
+	}
 	normal_ = tnormal;
 	uv_ = uv;
-	color_ = color;
+	color_ = vec4(colour.xyz, alpha);
 	camera_pos_ = tpos;
 	model_pos_ = newPos.xyz;
 }

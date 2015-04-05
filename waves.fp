@@ -1,7 +1,7 @@
 // inputs
 uniform vec4 lighting[17];
 uniform int num_lights;
-uniform vec4 diffuse;
+//uniform vec4 diffuse;
 
 // inputs
 varying vec2 uv_;
@@ -21,6 +21,6 @@ void main() {
     float diffuse_factor = max(dot(light_direction, nnormal), 0.0);
     diffuse_light += diffuse_factor * light_color;
   }
-  gl_FragColor = vec4(diffuse.xyz * diffuse_light, 1.0);
+  gl_FragColor = vec4(color_.xyz * diffuse_light, color_.w);
 
 }
