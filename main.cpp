@@ -8,10 +8,11 @@
 //
 
 #define OCTET_BULLET 1
+#define OCTET_ANTTWEAKBAR 1
 
 #include "../../octet.h"
 
-#include "water.h"
+#include "WaterApp.h"
 
 /// Create a box with octet
 int main(int argc, char **argv) {

@@ -216,7 +216,7 @@
     <ClInclude Include="..\..\shaders\shaders.h" />
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="Plane.h" />
-    <ClInclude Include="water.h" />
+    <ClInclude Include="WaterApp.h" />
     <ClInclude Include="wave.h" />
     <ClInclude Include="WaterPlane.h" />
   </ItemGroup>

@@ -431,9 +431,9 @@
       <Filter>octet\containers</Filter>
     </ClInclude>
     <ClInclude Include="Plane.h" />
-    <ClInclude Include="water.h" />
     <ClInclude Include="WaterPlane.h" />
     <ClInclude Include="wave.h" />
+    <ClInclude Include="WaterApp.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">

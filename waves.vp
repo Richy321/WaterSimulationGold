@@ -1,8 +1,3 @@
-//////////////////////////////////////////////////////////////////////////////////////////
-//
-// Default vertex shader for materials. Extend this to deal with bump mapping, defered rendering, shadows etc.
-//
-
 //uniforms
 uniform float waves[8*6]; // 6 floats, waveLength, amplitude, speed, steepness, directionX, directionY
 uniform int waveCount;

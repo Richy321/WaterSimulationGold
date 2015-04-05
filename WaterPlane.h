@@ -8,11 +8,6 @@ using namespace std::chrono;
 class WaterPlane : public Plane
 {
 private:
-
-	octet::dynarray<wave*> waves;
-	octet::vec4 colour;
-	static const int waveCount =8;
-
 	octet::ref<octet::param_uniform> colourUniform;
 	octet::ref<octet::param_uniform> timeUniform;
 	octet::ref<octet::param_uniform> waveCountUniform;
@@ -30,14 +25,16 @@ private:
 
 	time_point<high_resolution_clock> startTime;
 	float secondsSinceStart = 0.0f;
-
-
+public:
+	octet::dynarray<wave*> waves;
+	static const int waveCount = 8;
+	octet::vec4 colour;
 public:
 	WaterPlane(const octet::ivec3 dimensions, const octet::vec3 size) : Plane(dimensions, size)
 	{
 		colour = octet::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-		rand = octet::random(time(NULL));
+		rand = octet::random((unsigned int)time(NULL));
 
 		octet::param_shader* shader = new octet::param_shader("src/examples/water/waves.vp", "src/examples/water/waves.fp");
 		material = new octet::material(colour, shader);

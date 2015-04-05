@@ -11,11 +11,23 @@ namespace octet
 		ref<WaterPlane> waterPlane;
 		octet::camera_instance *camera; /// main camera instance 
 		octet::mouse_look mouseLookHelper;
+		bool isShowToolbar = true;
+		TwBar* toolbar;
+
+		int waveCount;
+		char buff[1];
+		
 
 	public:
 		/// this is called when we construct the class before everything is initialised.
 		water(int argc, char **argv) : app(argc, argv)
 		{
+		}
+
+		~water()
+		{
+			//Un-Initialise toolbar
+			TwTerminate();
 		}
 
 		/// this is called once OpenGL is initialized
@@ -24,7 +36,9 @@ namespace octet
 			app_scene = new visual_scene();
 			app_scene->create_default_camera_and_lights();
 
-			mouseLookHelper.init(this, 90.0f / 360.0f, false);
+			add_light_instances();
+
+			//mouseLookHelper.init(this, 90.0f / 360.0f, false);
 
 			//initialise wavePlane
 			const octet::vec3 size(100.0f, 0.0f, 100.0f);
@@ -41,6 +55,10 @@ namespace octet
 			camera->get_node()->loadIdentity();
 			camera->get_node()->rotate(-35, octet::vec3(1, 0, 0));
 			camera->get_node()->translate(octet::vec3(size.x(), -size.z(), 400.0f));
+
+			waveCount = waterPlane->waveCount;
+
+			InitialiseToolbar();
 		}
 
 		/// this is called to draw the world
@@ -49,7 +67,9 @@ namespace octet
 			int vx = 0, vy = 0;
 			get_viewport_size(vx, vy);
 			
-			//update simulations
+			TwWindowSize(vx, vy);
+
+			// update simulations
 			update();
 
 			app_scene->begin_render(vx, vy);
@@ -59,14 +79,19 @@ namespace octet
 
 			// draw the scene
 			app_scene->render((float)vx / vy);
+
+			// draw Toolbar
+			if(isShowToolbar)
+				TwDraw();
 		}
 
 		void update()
 		{
 			octet::scene_node *camera_node = camera->get_node();
 			octet::mat4t &camera_to_world = camera_node->access_nodeToParent();
-			mouseLookHelper.update(camera_to_world);
+			//mouseLookHelper.update(camera_to_world);
 			handleKeyboardControl();
+			handleMouseControl();
 
 			waterPlane->Update();
 		}
@@ -134,6 +159,85 @@ namespace octet
 			{
 				exit(1);
 			}
+		}
+
+		void handleMouseControl()
+		{
+			//Pass lmb mouse events to toolbar
+			int x = 0;
+			int y = 0;
+			get_mouse_pos(x, y);
+			TwMouseMotion(x, y);
+			if (is_key_going_down(key_lmb))
+			{
+				TwMouseButton(TW_MOUSE_PRESSED, TW_MOUSE_LEFT);
+			}
+
+			if (!is_key_down(key_lmb) && get_prev_keys()[key_lmb] != 0)
+			{
+				TwMouseButton(TW_MOUSE_RELEASED, TW_MOUSE_LEFT);
+			}
+		}
+
+		void add_light_instances(){
+			//this one works 
+			light *_light = new light();
+			light_instance *li = new light_instance();
+			scene_node *node = new scene_node();
+			app_scene->add_child(node);
+			node->translate(vec3(0.0f, -100, -100));
+			node->rotate(-45, vec3(1, 0, 0));
+			node->rotate(-180, vec3(0, 1, 0));
+			_light->set_color(vec4(1, 1, 1, 1));
+			_light->set_kind(atom_directional);
+			li->set_node(node);
+			li->set_light(_light);
+			app_scene->add_light_instance(li);
+
+			node = new scene_node();
+			app_scene->add_child(node);
+			_light = new light();
+			li = new light_instance();
+			node->translate(vec3(-100, 100, -100));
+			node->rotate(-45, vec3(1, 0, 0));
+			node->rotate(45, vec3(0, 1, 0));
+			_light->set_color(vec4(1, 1, 1, 1));
+			_light->set_kind(atom_directional);
+			li->set_node(node);
+			li->set_light(_light);
+			app_scene->add_light_instance(li);
+		}
+
+		void InitialiseToolbar()
+		{
+			TwInit(TW_OPENGL, NULL);
+			toolbar = TwNewBar("WaveParameters");
+			TwDefine(" WaveParameters label='Configuration' ");
+			TwAddVarRW(toolbar, "Water Colour", TW_TYPE_COLOR3F, &waterPlane->colour, " label='Water Colour' ");
+
+			string stringQuote = "'";
+			string stepText = " step=0.01 ";
+			
+			for (int i = 0; i < waterPlane->waveCount; i++)
+			{
+				sprintf(buff, "%d", i);
+				string groupText = " group='Wave";
+				groupText += buff;
+				groupText += stringQuote;
+				groupText += stepText;
+				
+				TwAddVarRW(toolbar, string("Amplitude ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->amplitude, groupText);
+				TwAddVarRW(toolbar, string("Wavelength ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->wavelength, groupText);
+				TwAddVarRW(toolbar, string("Speed ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->speed, groupText);
+				TwAddVarRW(toolbar, string("Steepness ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->steepness, groupText);
+				TwAddVarRW(toolbar, string("Direction X ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->directionX, groupText);
+				TwAddVarRW(toolbar, string("Direction Y ") += buff, TW_TYPE_FLOAT, &waterPlane->waves[i]->directionY, groupText);
+			}
+		}
+
+		void ToggleToolbar(bool isShow)
+		{
+			isShowToolbar = isShow;
 		}
 	};
 }
