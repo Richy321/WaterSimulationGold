@@ -12,13 +12,12 @@ namespace octet
 	{
 		// scene for drawing box
 		ref<visual_scene> app_scene;
-		ref<WaterPlane> waterPlane;
+		WaterPlane* waterPlane;
 		octet::camera_instance *camera; /// main camera instance 
 		octet::mouse_look mouseLookHelper;
 		bool isShowToolbar = true;
 		TwBar* toolbar;
 
-		int waveCount;
 		char buff[1];
 		
 		string configurationPath = "config.cfg";
@@ -42,18 +41,31 @@ namespace octet
 			app_scene = new visual_scene();
 			app_scene->create_default_camera_and_lights();
 
-			add_light_instances();
+			//add some more lights (looks a bit better)
+			light *dirLight1 = new light();
+			scene_node *lightNode1 = new scene_node();
+			light_instance *dirLightInstance1 = new light_instance();
+			lightNode1->access_nodeToParent().translate(100, 100, 100);
+			lightNode1->access_nodeToParent().rotateX(35);
+			lightNode1->access_nodeToParent().rotateY(135);
+			dirLight1->set_color(vec4(1, 1, 1, 1));
+			dirLight1->set_kind(atom_directional);
+			dirLightInstance1->set_node(lightNode1);
+			dirLightInstance1->set_light(dirLight1);
+			app_scene->add_light_instance(dirLightInstance1);
 
-			//mouseLookHelper.init(this, 90.0f / 360.0f, false);
+			add_light_instances();
+			mouseLookHelper.init(this, 90.0f / 360.0f, false);
+			enable_cursor();
 
 			//initialise wavePlane
 			const octet::vec3 size(100.0f, 0.0f, 100.0f);
-			const octet::ivec3 dimensions(64, 0, 64);
+			const octet::ivec3 dimensions(400, 0, 400);
 			waterPlane = new WaterPlane(dimensions, size);
 
 			scene_node *node = new scene_node();
 			app_scene->add_child(node);
-			app_scene->add_mesh_instance(new mesh_instance(node, waterPlane, waterPlane->getMaterial()));
+			app_scene->add_mesh_instance(new mesh_instance(node, waterPlane->getMesh(), waterPlane->getMaterial()));
 			
 			//change camera pos
 			camera = app_scene->get_camera_instance(0);
@@ -62,7 +74,12 @@ namespace octet
 			camera->get_node()->rotate(-35, octet::vec3(1, 0, 0));
 			camera->get_node()->translate(octet::vec3(size.x(), -size.z(), 400.0f));
 
-			waveCount = waterPlane->waveCount;
+			waterPlane->waveCount;
+
+			string path(getUrlPath);
+			path += configurationPath;
+			LoadConfigurationFile(path.c_str(), &waterPlane->waves);
+
 
 			InitialiseToolbar();
 		}
@@ -93,9 +110,6 @@ namespace octet
 
 		void update()
 		{
-			octet::scene_node *camera_node = camera->get_node();
-			octet::mat4t &camera_to_world = camera_node->access_nodeToParent();
-			//mouseLookHelper.update(camera_to_world);
 			handleKeyboardControl();
 			handleMouseControl();
 
@@ -195,35 +209,27 @@ namespace octet
 			{
 				TwMouseButton(TW_MOUSE_RELEASED, TW_MOUSE_LEFT);
 			}
-		}
 
-		void add_light_instances(){
-			//this one works 
-			light *_light = new light();
-			light_instance *li = new light_instance();
-			scene_node *node = new scene_node();
-			app_scene->add_child(node);
-			node->translate(vec3(0.0f, -100, -100));
-			node->rotate(-45, vec3(1, 0, 0));
-			node->rotate(-180, vec3(0, 1, 0));
-			_light->set_color(vec4(1, 1, 1, 1));
-			_light->set_kind(atom_directional);
-			li->set_node(node);
-			li->set_light(_light);
-			app_scene->add_light_instance(li);
+			int rx = 0, ry = 0;
+			get_absolute_mouse_movement(rx, ry);
 
-			node = new scene_node();
-			app_scene->add_child(node);
-			_light = new light();
-			li = new light_instance();
-			node->translate(vec3(-100, 100, -100));
-			node->rotate(-45, vec3(1, 0, 0));
-			node->rotate(45, vec3(0, 1, 0));
-			_light->set_color(vec4(1, 1, 1, 1));
-			_light->set_kind(atom_directional);
-			li->set_node(node);
-			li->set_light(_light);
-			app_scene->add_light_instance(li);
+			//only update mouse with alt held (allows clicking UI)
+			if (is_key_going_down(octet::key_alt))
+			{
+				accumulate_absolute_mouse_movement(-rx, -ry);
+			}
+
+			if (is_key_down(octet::key_alt))
+			{
+				//disable_cursor();
+				octet::mat4t &camera_to_world = camera->get_node()->access_nodeToParent();
+				mouseLookHelper.update(camera_to_world);
+			}
+			else if (is_key_going_up(octet::key_alt))
+			{
+				//enable_cursor();
+				mouseLookHelper.set_mouse_center(rx, ry);
+			}
 		}
 
 		void InitialiseToolbar()
@@ -233,8 +239,8 @@ namespace octet
 			TwDefine(" WaveParameters label='Configuration' ");
 			TwAddVarRW(toolbar, "Water Colour", TW_TYPE_COLOR3F, &waterPlane->colour, " label='Water Colour' ");
 			TwAddVarRW(toolbar, "Water Alpha", TW_TYPE_FLOAT, &waterPlane->alpha, " label='Water Alpha' step=0.01 min=0.0 max=1.0");
-			//TwAddVarRW(toolbar, "Wave Count", TW_TYPE_COLOR3F, &waterPlane->waveCount, " label='Wave Count' ");
-			TwAddVarRW(toolbar, "Wave Type", TW_TYPE_INT32, &waterPlane->waveType, " label='Wave Type' min=0 max=2");
+			TwAddVarRW(toolbar, "Wave Count", TW_TYPE_INT32, &waterPlane->waveCount, " label='Wave Count' min=1 max=8 ");
+			TwAddVarRW(toolbar, "Wave Type", TW_TYPE_INT32, &waterPlane->waveType, " label='Wave Type' min=0 max=1");
 
 			string stringQuote = "'";
 			string stepText = " step=0.01 ";
@@ -270,18 +276,21 @@ namespace octet
 			char* curPos = (char*)fileContents.data();
 			waterPlane->waveType = (WaterPlane::WavesType)(int)atoi(curPos);
 			curPos += 3;
-			//waterPlane->waveCount = (int)curPos;
+			waterPlane->waveCount = (int)atoi(curPos);
 			curPos += 3;
-
-			char* tokens = strtok(curPos, " ");
-			for (unsigned int i = 0; i < waveCount; i++)
+			waterPlane->alpha = (float)atof(curPos);
+			
+			char* tokens = strtok(curPos, " \r\n");
+			tokens = strtok(NULL, " \r\n");
+			
+			for (int i = 0; i < 8; i++)
 			{
-				(*waves)[i]->amplitude = atof(tokens); tokens = strtok(NULL, " ");
-				(*waves)[i]->wavelength = atof(tokens); tokens = strtok(NULL, " ");
-				(*waves)[i]->speed = atof(tokens); tokens = strtok(NULL, " ");
-				(*waves)[i]->steepness = atof(tokens); tokens = strtok(NULL, " ");
-				(*waves)[i]->directionX = atof(tokens); tokens = strtok(NULL, " \r\n");
-				(*waves)[i]->directionY = atof(tokens); tokens = strtok(NULL, " \r\n");
+				(*waves)[i]->amplitude = (float)atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->wavelength = (float)atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->speed = (float)atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->steepness = (float)atof(tokens); tokens = strtok(NULL, " ");
+				(*waves)[i]->directionX = (float)atof(tokens); tokens = strtok(NULL, " \r\n");
+				(*waves)[i]->directionY = (float)atof(tokens); tokens = strtok(NULL, " \r\n");
 			}
 		}
 
@@ -295,8 +304,9 @@ namespace octet
 			{
 				configFile << waterPlane->waveType << "\n";
 				configFile << waterPlane->waveCount << "\n";
+				configFile << waterPlane->alpha << "\n";
 
-				for (unsigned int i = 0; i < waveCount; i++)
+				for (int i = 0; i < 8; i++)
 				{
 					configFile << std::setprecision(precision) << (*waves)[i]->amplitude << " ";
 					configFile << std::setprecision(precision) << (*waves)[i]->wavelength << " ";
@@ -307,6 +317,36 @@ namespace octet
 				}
 			}
 			configFile.close();
+		}
+
+
+		void add_light_instances(){
+			//this one works 
+			light *_light = new light();
+			light_instance *li = new light_instance();
+			scene_node *node = new scene_node();
+			app_scene->add_child(node);
+			node->translate(vec3(0.0f, -100, -100));
+			node->rotate(-45, vec3(1, 0, 0));
+			node->rotate(-180, vec3(0, 1, 0));
+			_light->set_color(vec4(1, 1, 1, 1));
+			_light->set_kind(atom_directional);
+			li->set_node(node);
+			li->set_light(_light);
+			app_scene->add_light_instance(li);
+
+			node = new scene_node();
+			app_scene->add_child(node);
+			_light = new light();
+			li = new light_instance();
+			node->translate(vec3(-100, 100, -100));
+			node->rotate(-45, vec3(1, 0, 0));
+			node->rotate(45, vec3(0, 1, 0));
+			_light->set_color(vec4(1, 1, 1, 1));
+			_light->set_kind(atom_directional);
+			li->set_node(node);
+			li->set_light(_light);
+			app_scene->add_light_instance(li);
 		}
 	};
 }

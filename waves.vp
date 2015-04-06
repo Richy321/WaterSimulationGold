@@ -131,13 +131,13 @@ vec3 GerstnerWaveNormalPartial(int waveNumber, vec3 pos)
 	vec2 dir = normalize(vec2(directionX[waveNumber],directionY[waveNumber]));
 	float theta = dot(dir, vec2(pos.x, pos.z));
 
-	float s = sin(theta * frequency + time * phase);
+	float s = sin(theta * frequency  + time * phase);
 	float c = cos(theta * frequency + time * phase);
 
 	float x = 2.0 * amplitude[waveNumber] * dir.x * frequency * c;
 	float y = steepness[waveNumber] * amplitude[waveNumber] * frequency * s;
-	float z = 2.0 * amplitude[waveNumber] * dir.x * frequency * c;
-	
+	float z = 2.0 * amplitude[waveNumber] * dir.y * frequency * c;
+
 	return vec3(x,y,z);
 }
 
@@ -173,11 +173,9 @@ void main()
 			tnormal = (modelToCamera * vec4(GerstnerWaveNormal(pos.xyz), 0.0)).xyz;
 			tpos = (modelToCamera * newPos).xyz;
 			break;
+
 		case 2: //Radial
-					newPos.y = waterHeight + SineWaveSummation(newPos.x, newPos.z);
-			gl_Position = modelToProjection * newPos;
-			tnormal = (modelToCamera * vec4(SineNormal(pos.x, pos.y), 0.0)).xyz;
-			tpos = (modelToCamera * newPos).xyz;
+			//TODO
 			break;
 	}
 	normal_ = tnormal;

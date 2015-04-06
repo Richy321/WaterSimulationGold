@@ -13,7 +13,6 @@ protected:
 	octet::material *material = nullptr;
 
 public:
-
 	Plane(const octet::ivec3 dimensions, const octet::vec3 size)
 	{
 		this->dimensions = dimensions;
@@ -94,7 +93,6 @@ public:
 			this->set_mode(GL_LINES);
 		else
 			this->set_mode(GL_TRIANGLES);
-
 	}
 
 	octet::material* getMaterial() { return material; }

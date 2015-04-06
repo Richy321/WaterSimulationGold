@@ -38,11 +38,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\helpers\http_server.h">
       <Filter>octet\helpers</Filter>
     </ClInclude>
@@ -434,6 +429,7 @@
     <ClInclude Include="WaterPlane.h" />
     <ClInclude Include="wave.h" />
     <ClInclude Include="WaterApp.h" />
+    <ClInclude Include="TerrainSources.h" />
     <ClInclude Include="Plane2.h" />
   </ItemGroup>
   <ItemGroup>
@@ -445,5 +441,8 @@
     </None>
     <None Include="waves.vp" />
     <None Include="waves.fp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
 </Project>

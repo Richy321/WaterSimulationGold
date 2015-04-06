@@ -1,13 +1,15 @@
 #pragma once
 #include "Plane.h"
+#include "Plane2.h"
 #include "wave.h"
 #include <chrono>
 
 using namespace std::chrono;
 
-class WaterPlane : public Plane
+class WaterPlane : public Plane2
 {
 private:
+
 	octet::ref<octet::param_uniform> colourUniform;
 	octet::ref<octet::param_uniform> alphaUniform;
 	octet::ref<octet::param_uniform> timeUniform;
@@ -37,22 +39,20 @@ public:
 	} waveType = Gerstner;
 
 	octet::dynarray<wave*> waves;
-	static const int waveCount = 8;
+	int waveCount = 8;
 	octet::vec3 colour;
 	float alpha = 0.6f;
 
 public:
-	WaterPlane(const octet::ivec3 dimensions, const octet::vec3 size) : Plane(dimensions, size)
+	WaterPlane(const octet::ivec3 dimensions, const octet::vec3 size) : Plane2(dimensions, size)
 	{
 		colour = octet::vec3(0.0f, 0.0f, 1.0f);
-
 		rand = octet::random((unsigned int)time(NULL));
 
 		octet::param_shader* shader = new octet::param_shader("src/examples/water/waves.vp", "src/examples/water/waves.fp");
 		material = new octet::material(octet::vec4(colour, alpha) , shader);
-		setArrays();
-
-		InitialiseWaves(waveCount);
+		
+		InitialiseWaves(8);
 		InitialiseUniforms();
 
 		startTime = std::chrono::high_resolution_clock::now();
@@ -96,7 +96,6 @@ public:
 
 		octet::atom_t atom_waveCount = octet::app_utils::get_atom("waveCount");
 		waveCountUniform = material->add_uniform(nullptr, atom_waveCount, GL_INT, 1, octet::param::stage_vertex);
-		material->set_uniform(waveCountUniform, &waveCount, sizeof(waveCount));
 
 		octet::atom_t atom_amplitude = octet::app_utils::get_atom("amplitude");
 		amplitudeUniform = material->add_uniform(nullptr, atom_amplitude, GL_FLOAT, 8, octet::param::stage_vertex);
@@ -140,16 +139,19 @@ public:
 		//update wave type
 		material->set_uniform(waveTypeUniform, &waveType, sizeof(int));
 
+		//update wave count
+		material->set_uniform(waveCountUniform, &waveCount, sizeof(waveCount));
+
 		//update colour & alpha
 		material->set_uniform(colourUniform, &colour, sizeof(colour));
 		material->set_uniform(alphaUniform, &alpha, sizeof(alpha));
 
-		float amplitude[waveCount];
-		float wavelength[waveCount];
-		float speed[waveCount];
-		float steepness[waveCount];
-		float directionX[waveCount];
-		float directionY[waveCount];
+		float amplitude[8];
+		float wavelength[8];
+		float speed[8];
+		float steepness[8];
+		float directionX[8];
+		float directionY[8];
 
 		for (unsigned int i = 0; i < waves.size(); i++)
 		{
