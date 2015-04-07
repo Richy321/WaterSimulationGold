@@ -217,6 +217,7 @@
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Plane2.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="TerrainSources.h" />
     <ClInclude Include="WaterApp.h" />
     <ClInclude Include="wave.h" />

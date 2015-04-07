@@ -431,6 +431,7 @@
     <ClInclude Include="WaterApp.h" />
     <ClInclude Include="TerrainSources.h" />
     <ClInclude Include="Plane2.h" />
+    <ClInclude Include="Skybox.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resources\mesh_builder.inl">

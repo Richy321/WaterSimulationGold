@@ -23,6 +23,9 @@ namespace octet
 		string configurationPath = "config.cfg";
 		string getUrlPath = "src/examples/water/";
 
+		ref<mesh_instance> skybox;
+
+		
 	public:
 		/// this is called when we construct the class before everything is initialised.
 		water(int argc, char **argv) : app(argc, argv)
@@ -31,7 +34,7 @@ namespace octet
 
 		~water()
 		{
-			//Un-Initialise toolbar
+			//Un-initialise toolbar
 			TwTerminate();
 		}
 
@@ -41,7 +44,7 @@ namespace octet
 			app_scene = new visual_scene();
 			app_scene->create_default_camera_and_lights();
 
-			//add some more lights (looks a bit better)
+			//add some more light (looks a bit better)
 			light *dirLight1 = new light();
 			scene_node *lightNode1 = new scene_node();
 			light_instance *dirLightInstance1 = new light_instance();
@@ -54,7 +57,6 @@ namespace octet
 			dirLightInstance1->set_light(dirLight1);
 			app_scene->add_light_instance(dirLightInstance1);
 
-			add_light_instances();
 			mouseLookHelper.init(this, 90.0f / 360.0f, false);
 			enable_cursor();
 
@@ -69,7 +71,7 @@ namespace octet
 			
 			//change camera pos
 			camera = app_scene->get_camera_instance(0);
-			camera->set_far_plane(1000.0f);
+			camera->set_far_plane(2100.0f);
 			camera->get_node()->loadIdentity();
 			camera->get_node()->rotate(-35, octet::vec3(1, 0, 0));
 			camera->get_node()->translate(octet::vec3(size.x(), -size.z(), 400.0f));
@@ -79,6 +81,15 @@ namespace octet
 			string path(getUrlPath);
 			path += configurationPath;
 			LoadConfigurationFile(path.c_str(), &waterPlane->waves);
+
+
+			//init skybox
+			scene_node *skyboxNode = new scene_node();
+			material *skyboxMaterial = new material( new image("src/examples/water/Sky_5B.jpg"));
+			skyboxNode->rotate(90, octet::vec3(0, 1, 0));
+			skybox = new mesh_instance(skyboxNode, new mesh_sphere(vec3(0.0f, 0.0f, 0.0f), 1000), skyboxMaterial);
+			
+			app_scene->add_mesh_instance(skybox);
 
 
 			InitialiseToolbar();
@@ -317,36 +328,6 @@ namespace octet
 				}
 			}
 			configFile.close();
-		}
-
-
-		void add_light_instances(){
-			//this one works 
-			light *_light = new light();
-			light_instance *li = new light_instance();
-			scene_node *node = new scene_node();
-			app_scene->add_child(node);
-			node->translate(vec3(0.0f, -100, -100));
-			node->rotate(-45, vec3(1, 0, 0));
-			node->rotate(-180, vec3(0, 1, 0));
-			_light->set_color(vec4(1, 1, 1, 1));
-			_light->set_kind(atom_directional);
-			li->set_node(node);
-			li->set_light(_light);
-			app_scene->add_light_instance(li);
-
-			node = new scene_node();
-			app_scene->add_child(node);
-			_light = new light();
-			li = new light_instance();
-			node->translate(vec3(-100, 100, -100));
-			node->rotate(-45, vec3(1, 0, 0));
-			node->rotate(45, vec3(0, 1, 0));
-			_light->set_color(vec4(1, 1, 1, 1));
-			_light->set_kind(atom_directional);
-			li->set_node(node);
-			li->set_light(_light);
-			app_scene->add_light_instance(li);
 		}
 	};
 }

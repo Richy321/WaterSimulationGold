@@ -12,11 +12,7 @@ namespace octet
 			vec3 p = bb_min + pos + vec3(0, y, 0);
 			vec3 normal = normalize(vec3(0, 1, 0));
 			vec3 uv = uv_min + vec3((float)pos.x(), (float)pos.z(), 0) * uv_delta;
-			/*
-			printf("Point: x %f, y %f, z%f\n", p.x(), p.y(), p.z());
-			printf("Normal: x %f, y %f, z%f\n", normal.x(), normal.y(), normal.z());
-			printf("\n");
-			*/
+
 			return mesh::vertex(p, normal, uv);
 		}
 	};
